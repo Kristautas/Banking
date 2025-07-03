@@ -1,15 +1,17 @@
-public class BankAccount {
+import java.io.Serializable;
+
+public class BankAccount implements Serializable {
     private double balance;
-    String accountName;
+    String accountNumber;
 
 
     public BankAccount(String accountName){ //default constructor
-        this.accountName = accountName;
+        this.accountNumber = accountName;
         this.balance = 0;
     }
 
     public BankAccount(String accountName, double balance){ //constructor with bank balance
-        this.accountName = accountName;
+        this.accountNumber = accountName;
         this.balance = balance;
     }
 
@@ -26,7 +28,6 @@ public class BankAccount {
     }
 
     public void show(){
-        System.out.printf("%-20s %-20.2f%n", accountName, balance);
+        System.out.printf("%-20s %-20.2f%n", accountNumber, balance);
     }
-
 }
