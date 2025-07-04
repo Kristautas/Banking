@@ -1,3 +1,5 @@
+package com.myapp.bank;
+
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -63,6 +65,7 @@ public class Main {
                 case 7 -> {
                     exit = true;
                     System.out.println("The bank has closed for the day");
+
                 }
                 case 10 -> {
                     registerLogin(bank);
@@ -191,3 +194,4 @@ public class Main {
     public static void logIn(){
     }
 }
+

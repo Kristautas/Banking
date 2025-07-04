@@ -1,3 +1,5 @@
+package com.myapp.bank;
+
 import java.io.Serializable;
 
 public class BankAccount implements Serializable {
