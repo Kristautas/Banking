@@ -16,13 +16,22 @@ public class Main {
     public static BankAccount currentAccount = null;
     public static User user;
     static boolean exit = false;
+    public static Bank bank;
+
+    static {
+        try {
+            bank = new Bank("Central Bank");
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
 
     public static void main(String[] args) throws SQLException {
 
         SpringApplication.run(Main.class, args);
 
-        Bank bank = new Bank("Central Bank");
+
         bank.loadUsersFromDatabase();
 
         //----------------------
@@ -43,7 +52,7 @@ public class Main {
         while (!exit && user != null) {
             System.out.println();
             System.out.println("**************************************************************************************************************************************");
-            System.out.print("1: Check amount | 2: Deposit money | 3: Withdraw money | 4: Add new account | 5: show all accounts | 6: Switch account | 7: Exit | - ");
+            System.out.print("1: Check amount | 2: Deposit money | 3: Withdraw money | 4: Add new account | 5: Settings | 6: Switch account | 7: Exit | - ");
             int choice = scanner.nextInt();
             scanner.nextLine();
 
@@ -87,15 +96,14 @@ public class Main {
                 }
                 case 4 -> {
                     if (user != null) {
-                        createAccount(user, bank);
+                        BankAccount.createAccount(user, bank);
                     } else {
                         System.out.println("Please log in first.");
                         registerLogin(bank);
                     }
                 }
                 case 5 -> {
-                    assert user != null;
-                    user.showAllAccounts();
+                    currentAccount.accountSettings();
                 }
                 case 6 -> {
                     user.switchAccount();
@@ -126,34 +134,9 @@ public class Main {
             } else if (choice == 1) {
                 login(bank);
             }
-        }
-
-        public static void createAccount (User user, Bank bank){
-            double startingAmount = 0;
-
-            System.out.print("Enter the Number of the account: ");
-            String name = scanner.nextLine();
-
-            BankAccount myAccount = new BankAccount(name);
-
-            currentAccount = myAccount;
-            bank.addAccount(user, myAccount);
-
-            user.showAllAccounts();
-        }
-
-        public static void saveBank (Bank bank, String fileName){
-            try (FileOutputStream fileOut = new FileOutputStream("bankInfo.ser");
-                 ObjectOutputStream out = new ObjectOutputStream(fileOut)) {
-
-                out.writeObject(bank); // Serialize the Bank object
-                System.out.println("Bank data saved successfully to: " + fileName);
-            } catch (FileNotFoundException e) {
-                System.err.println("Error: File not found or cannot be created: " + fileName);
-                throw new RuntimeException("Failed to save bank data", e);
-            } catch (IOException e) {
-                System.err.println("Error: Failed to write bank data to file: " + fileName);
-                throw new RuntimeException("Failed to save bank data", e);
+            else{
+                System.out.println("Invalid choice. Please try again.");
+                registerLogin(bank);
             }
         }
 
@@ -199,26 +182,50 @@ public class Main {
             } while (repeat);
         }
 
-        public static void login (Bank bank){
+        public static void login(Bank bank) {
             System.out.println("Enter your full name");
             String firstName = scanner.next();
             String surname = scanner.next();
             scanner.nextLine();
-            System.out.print("Enter your password: ");
-            String password = scanner.nextLine();
+
+            boolean userFound = false;
 
             for (User u : bank.users) {
-                if (u.firstName.equals(firstName) && u.surname.equals(surname) && u.password.equals(password)) {
-                    user = u;
-                    if (!u.userAccounts.isEmpty()) {
-                        currentAccount = u.userAccounts.get(0);
+                if (u.firstName.equals(firstName) && u.surname.equals(surname)) {
+                    userFound = true;
+                    System.out.print("Enter your password: ");
+                    String password = scanner.nextLine();
+
+                    if (!u.checkPass(password)) {
+                        System.out.println("Invalid password. Please try again. Type 'exit' to exit.");
+                        String password2 = scanner.nextLine();
+                        if (password2.equalsIgnoreCase("exit")) {
+                            registerLogin(bank);
+                            return;
+                        }
+                        if (!u.checkPass(password2)) {
+                            System.out.println("Invalid password. Returning to login.");
+                            registerLogin(bank);
+                            return;
+                        }
                     }
-                    System.out.println("Login successful for " + firstName + " " + surname);
-                    return;
+
+                    user = u; // Set the user variable
+                    if (!u.userAccounts.isEmpty()) {
+                        currentAccount = u.userAccounts.getFirst();
+                        System.out.println("Login successful for " + firstName + " " + surname);
+                    } else {
+                        System.out.println("You don't have any accounts. Please create one.");
+                        BankAccount.createAccount(u, bank);
+                    }
+                    break;
                 }
             }
-            System.out.println("Login failed. Check your credentials or register.");
-            registerLogin(bank);
+
+            if (!userFound) {
+                System.out.println("User not found. Please try again or register.");
+                registerLogin(bank);
+            }
         }
 
         public static String createNewPassword () {
@@ -228,4 +235,3 @@ public class Main {
         public static void logIn () {
         }
     }
-
